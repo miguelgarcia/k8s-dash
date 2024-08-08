@@ -1,43 +1,28 @@
+import dash_bootstrap_components as dbc
 from dash import html
+
 
 class NavBar(html.Nav):
     def __init__(self):
-        super().__init__(
-            className="navbar navbar-inverse navbar-fixed-top",
-            children=[
-                html.Div(
-                    className="container-fluid",
-                    children=[html.Div(
-                        className="navbar-header",
-                        children=[
-                            html.A(className="navbar-brand", href="#", children="Kubedash")
-                        ]
-                    )]
-                )
-            ]
+        navbar = dbc.Navbar(
+            [
+                html.A(
+                    dbc.Row(
+                        [
+                            dbc.Col(dbc.NavbarBrand("Kubedash", className="ms-2")),
+                        ],
+                        align="center",
+                        className="g-0",
+                    ),
+                    href="#",
+                    style={"textDecoration": "none"},
+                ),
+                dbc.Nav([
+                    dbc.NavItem(dbc.NavLink("Deployment", href="/deployments")),
+                    dbc.NavItem(dbc.NavLink("Pods", href="/pods")),
+                ])
+            ],
+            color="dark",
+            dark=True,
         )
-
-class SideBar(html.Div):
-    def __init__(self, pathname=""):
-        super().__init__(
-            className="col-sm-3 col-md-2 sidebar",
-            children=[
-                html.Ul(
-                    className="nav nav-sidebar",
-                    children=[
-                        html.Li(
-                            className="active" if "/" == pathname else "",
-                            children=html.A("Overview", href="/")
-                        ),
-                        html.Li(
-                            className="active" if "/deployments" in pathname else "",
-                            children=html.A("Deployments", href="/deployments")
-                        ),
-                        html.Li(
-                            className="active" if "/pods" in pathname else "",
-                            children=html.A("Pods", href="/pods")
-                        )
-                    ]
-                )
-            ]
-        )
+        super().__init__(navbar)

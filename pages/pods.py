@@ -1,5 +1,8 @@
 import dash
-from dash import html, dcc, callback, Input, Output
+from dash import html, dcc, callback, Input, Output, ctx, ALL
+import dash_bootstrap_components as dbc
+from dash.dash import PreventUpdate
+from dash.html.Button import Button
 from kubernetes import client
 from datetime import UTC, datetime
 
@@ -11,6 +14,7 @@ def layout():
     return html.Div([
         html.H1('Pods'),
         html.Div(id="pods-list"),
+        html.Div(id="pod-info-toast"),
         dcc.Interval(
             id='interval-component',
             interval=10_000, # in milliseconds
@@ -33,7 +37,13 @@ def update_pods_list(n):
             html.Td(pod.metadata.name),
             html.Td(", ".join(labels)),
             html.Td(pod.status.phase),
-            html.Td(str(age))
+            html.Td(str(age)),
+            html.Td(dbc.Button(
+                "Delete",
+                id={"type": "delete-pod-button", "index": f"{pod.metadata.namespace}/{pod.metadata.name}"},
+                n_clicks=0,
+                color="danger"
+            ))
         ])
     return html.Div(className="table-responsive", children=
         html.Table(className="table table-striped", children=[
@@ -44,8 +54,30 @@ def update_pods_list(n):
                     html.Th("Labels"),
                     html.Th("State"),
                     html.Th("Age"),
+                    html.Th(""),
                 ])
             ),
             html.Tbody(list(map(format_pod, ret.items)))
         ])
     )
+
+@callback(
+    Output("pod-info-toast", "children"),
+    Input({"type": "delete-pod-button", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def delete_pod(n_clicks):
+    trigger = ctx.triggered_id
+    if not any(n_clicks) or trigger is None:
+        # No button was clicked
+        raise PreventUpdate
+    namespace, pod = trigger['index'].split("/")
+    v1.delete_namespaced_pod(pod, namespace)
+    toast = dbc.Toast(
+        [html.P(f"Deleting pod {pod} in namespace {namespace}", className="mb-0")],
+        header="Info",
+        icon="info",
+        dismissable=True,
+        style={"position": "fixed","right": 20, "width": 300},
+    )
+    return toast
