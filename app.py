@@ -16,4 +16,4 @@ app.layout = dbc.Container([
 ], fluid=True, style={"margin": "0", "padding": 0})
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)

@@ -1,10 +1,12 @@
 import dash
-from dash import html, dcc, callback, Input, Output, ctx, ALL
+import yaml
+from dash import html, dcc, callback, Input, Output, ctx, ALL, clientside_callback
 import dash_bootstrap_components as dbc
 from dash.dash import PreventUpdate
 from dash.html.Button import Button
 from kubernetes import client
 from datetime import UTC, datetime
+
 
 dash.register_page(__name__, path='/pods')
 
@@ -15,6 +17,8 @@ def layout():
         html.H1('Pods'),
         html.Div(id="pods-list"),
         html.Div(id="pod-info-toast"),
+        html.Div(id="pod-detail"),
+        html.Div(id="none"),
         dcc.Interval(
             id='interval-component',
             interval=10_000, # in milliseconds
@@ -35,15 +39,27 @@ def update_pods_list(n):
         return html.Tr([
             html.Td(pod.metadata.namespace),
             html.Td(pod.metadata.name),
-            html.Td(", ".join(labels)),
+            html.Td([dbc.Badge(x, color="secondary", className="ms-1") for x in labels]),
             html.Td(pod.status.phase),
             html.Td(str(age)),
-            html.Td(dbc.Button(
-                "Delete",
-                id={"type": "delete-pod-button", "index": f"{pod.metadata.namespace}/{pod.metadata.name}"},
-                n_clicks=0,
-                color="danger"
-            ))
+            html.Td([
+                dbc.Button(
+                    "Delete",
+                    id={"type": "delete-pod-button", "index": f"{pod.metadata.namespace}/{pod.metadata.name}"},
+                    n_clicks=0,
+                    color="danger",
+                    size="sm",
+                    className="me-1"
+                ),
+                dbc.Button(
+                    "View",
+                    id={"type": "view-pod-button", "index": f"{pod.metadata.namespace}/{pod.metadata.name}"},
+                    n_clicks=0,
+                    color="primary",
+                    size="sm",
+                    className="me-1"
+                ),
+            ])
         ])
     return html.Div(className="table-responsive", children=
         html.Table(className="table table-striped", children=[
@@ -60,6 +76,26 @@ def update_pods_list(n):
             html.Tbody(list(map(format_pod, ret.items)))
         ])
     )
+
+@callback(
+    Output("pod-detail", "children"),
+    Input({"type": "view-pod-button", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def view_pod(n_clicks):
+    trigger = ctx.triggered_id
+    if not any(n_clicks) or trigger is None:
+        # No button was clicked
+        raise PreventUpdate
+    namespace, pod = trigger['index'].split("/")
+    podv1 = v1.read_namespaced_pod(pod, namespace)
+    as_yaml = yaml.dump(v1.api_client.sanitize_for_serialization(podv1), indent=2)
+    return [
+        html.Pre(
+            html.Code(as_yaml, lang="yaml", className="language-yaml"),
+            className="language-yaml"
+        )
+    ]
 
 @callback(
     Output("pod-info-toast", "children"),
@@ -81,3 +117,17 @@ def delete_pod(n_clicks):
         style={"position": "fixed","right": 20, "width": 300},
     )
     return toast
+
+from dash import clientside_callback, Input, Output
+
+clientside_callback(
+    """
+    function() {
+        if (Prism) {
+            Prism.highlightAll();
+            console.log("highlighted");
+        }
+    }
+    """,
+    Input('pod-detail', 'children'),
+)

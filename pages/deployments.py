@@ -33,7 +33,7 @@ def update_deployments_list(n):
         return html.Tr([
             html.Td(d.metadata.namespace),
             html.Td(d.metadata.name),
-            html.Td(", ".join(labels)),
+            html.Td([dbc.Badge(x, color="secondary", className="ms-1") for x in labels]),
             html.Td(f"{d.status.available_replicas}/{d.status.replicas}"),
             html.Td(str(age)),
             html.Td(dbc.Button(
