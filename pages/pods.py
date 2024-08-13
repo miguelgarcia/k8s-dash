@@ -93,7 +93,7 @@ def view_pod(n_clicks):
     return [
         html.Pre(
             html.Code(as_yaml, lang="yaml", className="language-yaml"),
-            className="language-yaml"
+            className="language-yaml line-numbers"
         )
     ]
 
