@@ -1,6 +1,7 @@
 import dash
 import yaml
 from dash import html, dcc, callback, Input, Output, ctx, ALL
+from dash_iconify import DashIconify
 from dash.dash import PreventUpdate
 from dash.html.Button import Button
 from kubernetes import client
@@ -41,18 +42,21 @@ def update_pods_list(n):
             dmc.TableTd(pod.status.phase),
             dmc.TableTd(str(age)),
             dmc.TableTd(dmc.Group([
-                dmc.Button(
-                    "View",
+                dmc.ActionIcon(
+                    DashIconify(icon="radix-icons:eye-open"),
                     id={"type": "view-pod-button", "index": f"{pod.metadata.namespace}/{pod.metadata.name}"},
                     n_clicks=0,
-                    size="sm",
+                    color="gray",
+                    variant="outline",
+                    size="lg",
                 ),
-                dmc.Button(
-                    "Delete",
+                dmc.ActionIcon(
+                    DashIconify(icon="radix-icons:trash"),
                     id={"type": "delete-pod-button", "index": f"{pod.metadata.namespace}/{pod.metadata.name}"},
                     n_clicks=0,
                     color="red",
-                    size="sm",
+                    variant="filled",
+                    size="lg",
                 )
             ]))
         ])

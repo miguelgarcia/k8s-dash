@@ -2,7 +2,7 @@ import dash
 import yaml
 from dash import html, dcc, callback, Input, Output, ctx, ALL
 from dash.dash import PreventUpdate
-from dash.html.Button import Button
+from dash_iconify import DashIconify
 from kubernetes import client
 from datetime import UTC, datetime
 import dash_mantine_components as dmc
@@ -40,18 +40,21 @@ def update_deployments_list(n):
             dmc.TableTd(f"{d.status.available_replicas}/{d.status.replicas}"),
             dmc.TableTd(str(age)),
             dmc.TableTd(dmc.Group([
-                dmc.Button(
-                    "View",
+                dmc.ActionIcon(
+                    DashIconify(icon="radix-icons:eye-open"),
                     id={"type": "view-deployment-button", "index": f"{d.metadata.namespace}/{d.metadata.name}"},
                     n_clicks=0,
-                    size="xs",
+                    color="gray",
+                    variant="outline",
+                    size="lg",
                 ),
-                dmc.Button(
-                    "Restart",
+                dmc.ActionIcon(
+                    DashIconify(icon="radix-icons:symbol"),
                     id={"type": "restart-deployment-button", "index": f"{d.metadata.namespace}/{d.metadata.name}"},
                     n_clicks=0,
                     color="red",
-                    size="xs",
+                    variant="filled",
+                    size="lg",
                 ),
             ]))
         ])
@@ -60,7 +63,7 @@ def update_deployments_list(n):
             dmc.TableTr([
                     dmc.TableTh("Namespace"),
                     dmc.TableTh("Name"),
-                    dmc.TableTh("Labels"),
+                    dmc.TableTh("Labels", style=dict(width="150px")),
                     dmc.TableTh("Replicas"),
                     dmc.TableTh("Age"),
                     dmc.TableTh(""),

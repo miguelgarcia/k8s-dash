@@ -1,7 +1,8 @@
 import logging
 import dash
 import dash_mantine_components as dmc
-from dash import Dash, _dash_renderer, html
+from dash import Dash, _dash_renderer, html, callback, Input, Output, State
+from dash_iconify import DashIconify
 from kubernetes import config
 from components import NavBar
 _dash_renderer._set_react_version("18.2.0")
@@ -12,7 +13,20 @@ app = Dash(external_stylesheets=dmc.styles.ALL, use_pages=True, title="kubedash"
 
 config.load_kube_config()
 
+theme_toggle = dmc.ActionIcon(
+    [
+        dmc.Paper(DashIconify(icon="radix-icons:sun", width=25), darkHidden=True),
+        dmc.Paper(DashIconify(icon="radix-icons:moon", width=25), lightHidden=True),
+    ],
+    variant="transparent",
+    color="yellow",
+    id="color-scheme-toggle",
+    size="lg",
+    ms="auto",
+)
+
 app.layout = dmc.MantineProvider(
+    id="mantine-provider",
     forceColorScheme="dark",
     theme={
         "primaryColor": "indigo",
@@ -39,8 +53,8 @@ app.layout = dmc.MantineProvider(
         dmc.NotificationProvider(),
         dmc.AppShell(
             [
-                dmc.AppShellHeader(dmc.Title(f"Kubedash", order=1), px=25),
-                dmc.AppShellNavbar(NavBar()),
+                dmc.AppShellHeader(dmc.Group([dmc.Title(f"Kubedash", order=1), theme_toggle]), px=25),
+                dmc.AppShellNavbar([NavBar()]),
                 dmc.AppShellMain(dash.page_container),
             ],
             header={"height": 70},
@@ -54,6 +68,15 @@ app.layout = dmc.MantineProvider(
         )
     ],
 )
+
+@callback(
+    Output("mantine-provider", "forceColorScheme"),
+    Input("color-scheme-toggle", "n_clicks"),
+    State("mantine-provider", "forceColorScheme"),
+    prevent_initial_call=True,
+)
+def switch_theme(_, theme):
+    return "dark" if theme == "light" else "light"
 
 if __name__ == '__main__':
     app.run_server(debug=True)
