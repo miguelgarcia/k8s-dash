@@ -1,9 +1,11 @@
 import dash
-from dash import html, dcc, callback, Input, Output, ALL, ctx
+import yaml
+from dash import html, dcc, callback, Input, Output, ctx, ALL
 from dash.dash import PreventUpdate
-import dash_bootstrap_components as dbc
+from dash.html.Button import Button
 from kubernetes import client
 from datetime import UTC, datetime
+import dash_mantine_components as dmc
 
 dash.register_page(__name__, path='/deployments')
 
@@ -13,7 +15,8 @@ def layout():
     return html.Div([
         html.H1('Deployments'),
         html.Div(id="deployments-list"),
-        html.Div(id="deployment-info-toast"),
+        html.Div(id="notifications-container"),
+        html.Div(id="deployment-detail"),
         dcc.Interval(
             id='interval-component',
             interval=10_000, # in milliseconds
@@ -30,38 +33,46 @@ def update_deployments_list(n):
     def format_deployment(d):
         labels = [f"{k}={d.metadata.labels[k]}" for k in d.metadata.labels]
         age = datetime.now(UTC) - d.metadata.creation_timestamp
-        return html.Tr([
-            html.Td(d.metadata.namespace),
-            html.Td(d.metadata.name),
-            html.Td([dbc.Badge(x, color="secondary", className="ms-1") for x in labels]),
-            html.Td(f"{d.status.available_replicas}/{d.status.replicas}"),
-            html.Td(str(age)),
-            html.Td(dbc.Button(
-                "Restart",
-                id={"type": "restart-deployment-button", "index": f"{d.metadata.namespace}/{d.metadata.name}"},
-                n_clicks=0,
-                color="dark"
-            ))
+        return dmc.TableTr([
+            dmc.TableTd(d.metadata.namespace),
+            dmc.TableTd(d.metadata.name),
+            dmc.TableTd(dmc.Group([dmc.Badge(x, size="sm") for x in labels])),
+            dmc.TableTd(f"{d.status.available_replicas}/{d.status.replicas}"),
+            dmc.TableTd(str(age)),
+            dmc.TableTd(dmc.Group([
+                dmc.Button(
+                    "View",
+                    id={"type": "view-deployment-button", "index": f"{d.metadata.namespace}/{d.metadata.name}"},
+                    n_clicks=0,
+                    size="xs",
+                ),
+                dmc.Button(
+                    "Restart",
+                    id={"type": "restart-deployment-button", "index": f"{d.metadata.namespace}/{d.metadata.name}"},
+                    n_clicks=0,
+                    color="red",
+                    size="xs",
+                ),
+            ]))
         ])
-    return html.Div(className="table-responsive", children=
-        html.Table(className="table table-striped", children=[
-            html.Thead(
-                html.Tr([
-                    html.Th("Namespace"),
-                    html.Th("Name"),
-                    html.Th("Labels"),
-                    html.Th("Replicas"),
-                    html.Th("Age"),
-                    html.Th(""),
-                ])
-            ),
-            html.Tbody(list(map(format_deployment, ret.items)))
-        ])
-    )
-
+    return dmc.Table([
+        dmc.TableThead(
+            dmc.TableTr([
+                    dmc.TableTh("Namespace"),
+                    dmc.TableTh("Name"),
+                    dmc.TableTh("Labels"),
+                    dmc.TableTh("Replicas"),
+                    dmc.TableTh("Age"),
+                    dmc.TableTh(""),
+            ])
+        ),
+        dmc.TableTbody(
+            list(map(format_deployment, ret.items))
+        )
+    ])
 
 @callback(
-    Output("deployment-info-toast", "children"),
+    Output("notifications-container", "children", allow_duplicate=True),
     Input({"type": "restart-deployment-button", "index": ALL}, "n_clicks"),
     prevent_initial_call=True,
 )
@@ -82,11 +93,23 @@ def restart_deployment(n_clicks):
             }
         }
     })
-    toast = dbc.Toast(
-        [html.P(f"Restarting deployment {deployment} in namespace {namespace}", className="mb-0")],
-        header="Info",
-        icon="info",
-        dismissable=True,
-        style={"position": "fixed","right": 20, "width": 300},
+    return dmc.Notification(
+        title="Restarting deployment",
+        action="show",
+        message=f"Restarting deployment {deployment} in namespace {namespace}",
     )
-    return toast
+
+@callback(
+    Output("deployment-detail", "children"),
+    Input({"type": "view-deployment-button", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def view_pod(n_clicks):
+    trigger = ctx.triggered_id
+    if not any(n_clicks) or trigger is None:
+        # No button was clicked
+        raise PreventUpdate
+    namespace, deployment = trigger['index'].split("/")
+    podv1 = v1.read_namespaced_deployment(deployment, namespace)
+    as_yaml = yaml.dump(v1.api_client.sanitize_for_serialization(podv1), indent=2)
+    return dmc.CodeHighlight(as_yaml, language="yaml")

@@ -1,28 +1,10 @@
-import dash_bootstrap_components as dbc
 from dash import html
+import dash_mantine_components as dmc
 
-
-class NavBar(html.Nav):
+class NavBar(html.Div):
     def __init__(self):
-        navbar = dbc.Navbar(
-            [
-                html.A(
-                    dbc.Row(
-                        [
-                            dbc.Col(dbc.NavbarBrand("Kubedash", className="ms-2")),
-                        ],
-                        align="center",
-                        className="g-0",
-                    ),
-                    href="#",
-                    style={"textDecoration": "none"},
-                ),
-                dbc.Nav([
-                    dbc.NavItem(dbc.NavLink("Deployment", href="/deployments")),
-                    dbc.NavItem(dbc.NavLink("Pods", href="/pods")),
-                ])
-            ],
-            color="dark",
-            dark=True,
-        )
-        super().__init__(navbar)
+        super().__init__([
+                dmc.NavLink(label="Home", href="/"),
+                dmc.NavLink(label="Deployments", href="/deployments"),
+                dmc.NavLink(label="Pods", href="/pods"),
+        ])
