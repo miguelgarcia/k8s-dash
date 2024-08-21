@@ -4,5 +4,5 @@ from dash import html
 dash.register_page(__name__, path='/')
 
 layout = html.Div([
-    html.H1('This is our welcolme page'),
+    html.H1('Welcome to k8s-dash'),
 ])

@@ -13,15 +13,15 @@ _dash_renderer._set_react_version("18.2.0")
 
 config.load_kube_config()
 
-ADMIN_PASSWORD = os.getenv("KUBE_DASH_ADMIN_PASSWORD")
+ADMIN_PASSWORD = os.getenv("K8S_DASH_ADMIN_PASSWORD")
 if ADMIN_PASSWORD is None:
-    raise ValueError("KUBE_DASH_ADMIN_PASSWORD must be set")
+    raise ValueError("K8S_DASH_ADMIN_PASSWORD must be set")
 
 VALID_USERNAME_PASSWORD_PAIRS = {
     'admin': ADMIN_PASSWORD
 }
 
-app = Dash(external_stylesheets=dmc.styles.ALL, use_pages=True, title="kubedash")
+app = Dash(external_stylesheets=dmc.styles.ALL, use_pages=True, title="k8s-dash")
 
 auth = dash_auth.BasicAuth(
     app,
@@ -72,7 +72,7 @@ app.layout = dmc.MantineProvider(
         dmc.AppShell(
             [
                 dmc.AppShellHeader(
-                    dmc.Group([dmc.Title("Kubedash", order=1), theme_toggle]), px=25
+                    dmc.Group([dmc.Title("k8s-dash", order=1), theme_toggle]), px=25
                 ),
                 dmc.AppShellNavbar([NavBar()]),
                 dmc.AppShellMain(dash.page_container),
