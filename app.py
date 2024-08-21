@@ -1,3 +1,6 @@
+"""
+Small kubernetes dashboard app built with Dash.
+"""
 import dash
 import dash_auth
 import base64

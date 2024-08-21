@@ -1,3 +1,6 @@
+"""
+Page to view deployments and restart them
+"""
 import dash
 import yaml
 from dash import html, dcc, callback, Input, Output, ctx, ALL

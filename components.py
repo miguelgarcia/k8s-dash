@@ -1,5 +1,9 @@
+"""
+This module contains the components that are used in the app.
+"""
 from dash import html
 import dash_mantine_components as dmc
+
 
 class NavBar(html.Div):
     def __init__(self):

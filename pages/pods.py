@@ -1,3 +1,6 @@
+"""
+Page to view pods and delete them
+"""
 import dash
 import yaml
 from dash import dcc, html, callback, Input, Output, ctx, ALL

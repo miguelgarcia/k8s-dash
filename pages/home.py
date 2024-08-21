@@ -1,3 +1,6 @@
+"""
+This is the home page of the app.
+"""
 import dash
 from dash import html
 
