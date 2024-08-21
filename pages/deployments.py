@@ -11,6 +11,7 @@ dash.register_page(__name__, path='/deployments')
 
 v1 = client.AppsV1Api()
 
+
 def layout():
     return html.Div([
         html.H1('Deployments'),
@@ -19,10 +20,11 @@ def layout():
         html.Div(id="deployment-detail"),
         dcc.Interval(
             id='interval-component',
-            interval=10_000, # in milliseconds
+            interval=10_000,
             n_intervals=0
         )
     ])
+
 
 @callback(
     Output("deployments-list", "children"),
@@ -30,6 +32,7 @@ def layout():
 )
 def update_deployments_list(n):
     ret = v1.list_deployment_for_all_namespaces()
+
     def format_deployment(d):
         labels = [f"{k}={d.metadata.labels[k]}" for k in d.metadata.labels]
         age = datetime.now(UTC) - d.metadata.creation_timestamp
@@ -42,7 +45,10 @@ def update_deployments_list(n):
             dmc.TableTd(dmc.Group([
                 dmc.ActionIcon(
                     DashIconify(icon="radix-icons:eye-open"),
-                    id={"type": "view-deployment-button", "index": f"{d.metadata.namespace}/{d.metadata.name}"},
+                    id={
+                        "type": "view-deployment-button",
+                        "index": f"{d.metadata.namespace}/{d.metadata.name}"
+                    },
                     n_clicks=0,
                     color="gray",
                     variant="outline",
@@ -50,7 +56,10 @@ def update_deployments_list(n):
                 ),
                 dmc.ActionIcon(
                     DashIconify(icon="radix-icons:symbol"),
-                    id={"type": "restart-deployment-button", "index": f"{d.metadata.namespace}/{d.metadata.name}"},
+                    id={
+                        "type": "restart-deployment-button",
+                        "index": f"{d.metadata.namespace}/{d.metadata.name}"
+                    },
                     n_clicks=0,
                     color="red",
                     variant="filled",
@@ -73,6 +82,7 @@ def update_deployments_list(n):
             list(map(format_deployment, ret.items))
         )
     ])
+
 
 @callback(
     Output("notifications-container", "children", allow_duplicate=True),
@@ -101,6 +111,7 @@ def restart_deployment(n_clicks):
         action="show",
         message=f"Restarting deployment {deployment} in namespace {namespace}",
     )
+
 
 @callback(
     Output("deployment-detail", "children"),

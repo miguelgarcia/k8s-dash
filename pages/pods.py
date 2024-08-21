@@ -1,9 +1,8 @@
 import dash
 import yaml
-from dash import html, dcc, callback, Input, Output, ctx, ALL
+from dash import dcc, html, callback, Input, Output, ctx, ALL
 from dash_iconify import DashIconify
 from dash.dash import PreventUpdate
-from dash.html.Button import Button
 from kubernetes import client
 from datetime import UTC, datetime
 import dash_mantine_components as dmc
@@ -11,6 +10,7 @@ import dash_mantine_components as dmc
 dash.register_page(__name__, path='/pods')
 
 v1 = client.CoreV1Api()
+
 
 def layout():
     return html.Div([
@@ -20,10 +20,11 @@ def layout():
         html.Div(id="pod-detail"),
         dcc.Interval(
             id='interval-component',
-            interval=10_000, # in milliseconds
+            interval=10_000,
             n_intervals=0
         )
     ])
+
 
 @callback(
     Output("pods-list", "children"),
@@ -44,7 +45,10 @@ def update_pods_list(n):
             dmc.TableTd(dmc.Group([
                 dmc.ActionIcon(
                     DashIconify(icon="radix-icons:eye-open"),
-                    id={"type": "view-pod-button", "index": f"{pod.metadata.namespace}/{pod.metadata.name}"},
+                    id={
+                        "type": "view-pod-button",
+                        "index": f"{pod.metadata.namespace}/{pod.metadata.name}"
+                    },
                     n_clicks=0,
                     color="gray",
                     variant="outline",
@@ -52,7 +56,10 @@ def update_pods_list(n):
                 ),
                 dmc.ActionIcon(
                     DashIconify(icon="radix-icons:trash"),
-                    id={"type": "delete-pod-button", "index": f"{pod.metadata.namespace}/{pod.metadata.name}"},
+                    id={
+                        "type": "delete-pod-button",
+                        "index": f"{pod.metadata.namespace}/{pod.metadata.name}"
+                    },
                     n_clicks=0,
                     color="red",
                     variant="filled",
@@ -76,6 +83,7 @@ def update_pods_list(n):
         )
     ])
 
+
 @callback(
     Output("pod-detail", "children"),
     Input({"type": "view-pod-button", "index": ALL}, "n_clicks"),
@@ -90,6 +98,7 @@ def view_pod(n_clicks):
     podv1 = v1.read_namespaced_pod(pod, namespace)
     as_yaml = yaml.dump(v1.api_client.sanitize_for_serialization(podv1), indent=2)
     return dmc.CodeHighlight(as_yaml, language="yaml")
+
 
 @callback(
     Output("notifications-container", "children", allow_duplicate=True),

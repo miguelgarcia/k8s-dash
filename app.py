@@ -1,15 +1,33 @@
-import logging
 import dash
+import dash_auth
+import base64
+import os
 import dash_mantine_components as dmc
-from dash import Dash, _dash_renderer, html, callback, Input, Output, State
+from dash import Dash, _dash_renderer, callback, Input, Output, State
 from dash_iconify import DashIconify
 from kubernetes import config
 from components import NavBar
+
+# Required by dmc
 _dash_renderer._set_react_version("18.2.0")
 
 config.load_kube_config()
 
+ADMIN_PASSWORD = os.getenv("KUBE_DASH_ADMIN_PASSWORD")
+if ADMIN_PASSWORD is None:
+    raise ValueError("KUBE_DASH_ADMIN_PASSWORD must be set")
+
+VALID_USERNAME_PASSWORD_PAIRS = {
+    'admin': ADMIN_PASSWORD
+}
+
 app = Dash(external_stylesheets=dmc.styles.ALL, use_pages=True, title="kubedash")
+
+auth = dash_auth.BasicAuth(
+    app,
+    VALID_USERNAME_PASSWORD_PAIRS,
+    secret_key=base64.b64encode(os.urandom(30)).decode('utf-8')
+)
 
 config.load_kube_config()
 
@@ -53,7 +71,9 @@ app.layout = dmc.MantineProvider(
         dmc.NotificationProvider(),
         dmc.AppShell(
             [
-                dmc.AppShellHeader(dmc.Group([dmc.Title(f"Kubedash", order=1), theme_toggle]), px=25),
+                dmc.AppShellHeader(
+                    dmc.Group([dmc.Title("Kubedash", order=1), theme_toggle]), px=25
+                ),
                 dmc.AppShellNavbar([NavBar()]),
                 dmc.AppShellMain(dash.page_container),
             ],
@@ -64,10 +84,11 @@ app.layout = dmc.MantineProvider(
                 "width": 250,
                 "breakpoint": "sm",
                 "collapsed": {"mobile": True},
-            }
-        )
+            },
+        ),
     ],
 )
+
 
 @callback(
     Output("mantine-provider", "forceColorScheme"),
@@ -78,5 +99,6 @@ app.layout = dmc.MantineProvider(
 def switch_theme(_, theme):
     return "dark" if theme == "light" else "light"
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
+
+if __name__ == "__main__":
+    app.run_server(debug=False)
