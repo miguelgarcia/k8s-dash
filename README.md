@@ -1,7 +1,9 @@
 k8s-dash
 ---
 
-A simple Kubernetes dashboard built in Python using Dash framework.
+A simple Kubernetes dashboard built in Python using [Dash](https://dash.plotly.com/) framework.
+
+![Screenshot displaying the deployments page](screenshot.png)
 
 **Current features:**
 
