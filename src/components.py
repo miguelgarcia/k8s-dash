@@ -9,6 +9,7 @@ class NavBar(html.Div):
     def __init__(self):
         super().__init__([
                 dmc.NavLink(label="Home", href="/"),
+                dmc.NavLink(label="Nodes", href="/nodes"),
                 dmc.NavLink(label="Deployments", href="/deployments"),
                 dmc.NavLink(label="Pods", href="/pods"),
         ])

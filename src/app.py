@@ -6,7 +6,7 @@ import dash_auth
 import base64
 import os
 import dash_mantine_components as dmc
-from dash import Dash, _dash_renderer, callback, Input, Output, State
+from dash import Dash, _dash_renderer, callback, Input, Output, State, html
 from dash_iconify import DashIconify
 from kubernetes import config
 from components import NavBar
@@ -79,6 +79,18 @@ app.layout = dmc.MantineProvider(
                 ),
                 dmc.AppShellNavbar([NavBar()]),
                 dmc.AppShellMain(dash.page_container),
+                dmc.AppShellFooter(html.A(
+                    [
+                        "k8s-dash",
+                        DashIconify(icon="bx:bxl-github", style={"margin-left": "0.5rem"})
+                    ],
+                    href="https://github.com/miguelgarcia/k8s-dash"
+                ),
+                    style={
+                        "display": "flex",
+                        "justify-content": "flex-end"
+                    }
+                )
             ],
             header={"height": 70},
             padding="xl",

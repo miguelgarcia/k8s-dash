@@ -1,6 +1,7 @@
 """
 Page to view pods and delete them
 """
+import math
 import dash
 import yaml
 from dash import dcc, html, callback, Input, Output, ctx, ALL
@@ -13,6 +14,7 @@ import dash_mantine_components as dmc
 dash.register_page(__name__, path='/pods')
 
 v1 = client.CoreV1Api()
+custom_objects = client.CustomObjectsApi()
 
 
 def layout():
@@ -35,6 +37,26 @@ def layout():
 )
 def update_pods_list(n):
     ret = v1.list_pod_for_all_namespaces()
+    for pod in ret.items:
+        pod.status.metrics = {"cpu": "0n", "memory": "0Ki"}
+    try:
+        stats = custom_objects.list_cluster_custom_object("metrics.k8s.io", "v1beta1", "pods")
+        for s in stats["items"]:
+            for p in ret.items:
+                if (p.metadata.namespace == s["metadata"]["namespace"]
+                   and p.metadata.name == s["metadata"]["name"]):
+                    cpu = 0
+                    ram = 0
+                    for c in s["containers"]:
+                        cpu += int(c["usage"]["cpu"].replace("n", ""))
+                        ram += int(c["usage"]["memory"].replace("Ki", ""))
+
+                    p.status.metrics = {
+                        "cpu": f"{cpu}n",
+                        "memory": f"{ram}Ki"
+                    }
+    except Exception as e:
+        print(e)
 
     def format_pod(pod):
         labels = [f"{k}={pod.metadata.labels[k]}" for k in pod.metadata.labels]
@@ -44,7 +66,10 @@ def update_pods_list(n):
             dmc.TableTd(pod.metadata.name),
             dmc.TableTd(dmc.Group([dmc.Badge(x, size="sm") for x in labels])),
             dmc.TableTd(pod.status.phase),
-            dmc.TableTd(str(age)),
+            dmc.TableTd(str(math.ceil(int(pod.status.metrics["cpu"].replace("n", ""))
+                            / 1_000_000)) + "m"),
+            dmc.TableTd(f"{int(pod.status.metrics['memory'].replace('Ki', '')) / 1_000:.2f}Mi"),
+            dmc.TableTd(str(age)[:-7]),
             dmc.TableTd(dmc.Group([
                 dmc.ActionIcon(
                     DashIconify(icon="radix-icons:eye-open"),
@@ -77,6 +102,8 @@ def update_pods_list(n):
                     dmc.TableTh("Name"),
                     dmc.TableTh("Labels"),
                     dmc.TableTh("State"),
+                    dmc.TableTh("CPU"),
+                    dmc.TableTh("RAM"),
                     dmc.TableTh("Age"),
                     dmc.TableTh(""),
             ])
