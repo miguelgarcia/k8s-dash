@@ -22,7 +22,14 @@ def layout():
         html.H1('Pods'),
         html.Div(id="pods-list"),
         html.Div(id="notifications-container"),
-        html.Div(id="pod-detail"),
+        html.Div([
+            html.H2("Pod Logs"),
+            html.Div(id="pod-logs"),
+        ]),
+        html.Div([
+            html.H2("Pod YAML"),
+            html.Div(id="pod-detail"),
+        ]),
         dcc.Interval(
             id='interval-component',
             interval=10_000,
@@ -128,6 +135,21 @@ def view_pod(n_clicks):
     podv1 = v1.read_namespaced_pod(pod, namespace)
     as_yaml = yaml.dump(v1.api_client.sanitize_for_serialization(podv1), indent=2)
     return dmc.CodeHighlight(as_yaml, language="yaml")
+
+
+@callback(
+    Output("pod-logs", "children"),
+    Input({"type": "view-pod-button", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def view_pod_logs(n_clicks):
+    trigger = ctx.triggered_id
+    if not any(n_clicks) or trigger is None:
+        # No button was clicked
+        raise PreventUpdate
+    namespace, pod = trigger['index'].split("/")
+    logs = v1.read_namespaced_pod_log(pod, namespace, tail_lines=50)
+    return dmc.CodeHighlight(logs, language="")
 
 
 @callback(
