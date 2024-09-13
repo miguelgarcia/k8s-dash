@@ -14,7 +14,11 @@ from components import NavBar
 # Required by dmc
 _dash_renderer._set_react_version("18.2.0")
 
-config.load_kube_config()
+try:
+    config.load_incluster_config()
+except config.config_exception.ConfigException:
+    print("Not running on kubernetes, loading kubeconfig.")
+    config.load_kube_config()
 
 ADMIN_PASSWORD = os.getenv("K8S_DASH_ADMIN_PASSWORD")
 if ADMIN_PASSWORD is None:
@@ -31,8 +35,6 @@ auth = dash_auth.BasicAuth(
     VALID_USERNAME_PASSWORD_PAIRS,
     secret_key=base64.b64encode(os.urandom(30)).decode('utf-8')
 )
-
-config.load_kube_config()
 
 theme_toggle = dmc.ActionIcon(
     [
