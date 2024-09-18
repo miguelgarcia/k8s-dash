@@ -7,10 +7,9 @@ A simple Kubernetes dashboard built in Python using [Dash](https://dash.plotly.c
 
 **Current features:**
 
-- View all deployments, including their yaml definition
-- Restart deployments
-- View all pods, including their yaml definition
-- Delete pods
+- Nodes: list, and view CPU & RAM usage
+- Deployments: list, view their YAML definition, and restart them
+- Pods: list, view CPU & RAM usage, view YAML definition, view logs, and delete
 - Basic Authentication
 
 **Disclaimer:** I built k8s-dash for my own personal use and mostly for learning about the
